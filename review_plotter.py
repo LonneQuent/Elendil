@@ -13,7 +13,9 @@ class ReviewPlotter:
             print("Error while loading the file")
 
 
-    def show_repartition(self,palier_criteria=None,order_label_criteria=None,neg_threshold=3,pos_threshold=4):
+    def show_repartition(self,palier_criteria=None,order_label_criteria=None\
+                         ,state_criteria=None,city_criteria=None\
+                         ,neg_threshold=3,pos_threshold=4):
 
             def reviewer_profile(x):
                 if pd.isnull(x):
@@ -32,7 +34,13 @@ class ReviewPlotter:
                 filtered_df=filtered_df[filtered_df["palier"]==palier_criteria]
 
             if(order_label_criteria):
-                filtered_df=filtered_df[filtered_df["order_label"]==order_label_criteria]        
+                filtered_df=filtered_df[filtered_df["order_label"]==order_label_criteria]   
+
+            if(state_criteria):
+                filtered_df=filtered_df[filtered_df["customer_state"]==state_criteria]
+
+            if(city_criteria):
+                filtered_df=filtered_df[filtered_df["customer_city"]==city_criteria]    
         
             if("profile" in filtered_df.columns):
                 values=filtered_df["profile"].value_counts()
