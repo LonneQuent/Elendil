@@ -18,15 +18,15 @@ class ReviewPlotter:
             def reviewer_profile(x):
                 if pd.isnull(x):
                     return "Unknown"
-                elif x>=neg_threshold:
+                elif x>=pos_threshold:
                     return "Promoter"
-                elif x<pos_threshold:
+                elif x<neg_threshold:
                     return "Detractor"
                 else:
                     return "Neutral"
 
             self.data["profile"]=self.data["average_review_score"].apply(lambda x: reviewer_profile(x))
-            filtered_df=self.copy()
+            filtered_df=self.data.copy()
 
             if(palier_criteria):
                 filtered_df=filtered_df[filtered_df["palier"]==palier_criteria]

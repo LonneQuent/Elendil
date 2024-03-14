@@ -14,7 +14,7 @@ class ReviewAnalyzer:
 
     def compute_data(self):
 
-        key_table=self.customer_data[["customer_id","customer_unique_id"]]
+        key_table=self.customer_data[["customer_id","customer_unique_id","customer_city","customer_state"]]
         merged_df=pd.merge(self.order_data,self.review_data,how="left",on="order_id")
         merged_df=pd.merge(merged_df,key_table,how="left",on="customer_id")
 
