@@ -54,8 +54,8 @@ class ReviewPlotter:
 review_plotter = ReviewPlotter()
 
 # df_order_payments = pd.read_csv("Data\olist_order_payments_dataset.csv")
-df_final = pd.read_csv("C:/Users/anton/Desktop/Data/Master2/data_app_automatisation/Elendil/data_final.csv")
-df_grouped = pd.read_csv("C:/Users/anton/Desktop/Data/Master2/data_app_automatisation/Elendil/df_group.csv")
+df_final = pd.read_csv("data_final.csv")
+df_grouped = pd.read_csv("df_group.csv")
 
 
 df_grouped['customer_city'] = df_final['customer_city']
