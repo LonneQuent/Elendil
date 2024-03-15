@@ -257,12 +257,6 @@ def prix_page(filtre):
 
 
 
-# SIDEBAR 
-with st.sidebar:
-    
-    # st.image('pngegg.png')
-    st.title('Analyse Client Olist')
-    
     
     ##st.write("**Les filtres s'aplliquent seulement pour l'onglet synthèse**")
     # FILTRE State 
