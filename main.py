@@ -5,6 +5,7 @@ import plotly.express as px
 import os
 
 st.set_page_config(layout="wide")
+st.title("Analyse client Olist")
 
 class ReviewPlotter:
 
@@ -17,7 +18,7 @@ class ReviewPlotter:
             print("Error while loading the file")
 
 
-    def show_repartition(self,palier_criteria=None,order_label_criteria=None,neg_threshold=3,pos_threshold=4):
+    def show_repartition(self,column,palier_criteria=None,order_label_criteria=None,neg_threshold=3,pos_threshold=4):
 
             def reviewer_profile(x):
                 if pd.isnull(x):
@@ -44,7 +45,7 @@ class ReviewPlotter:
 
                 # Plotting the pie chart using Plotly Express
                 fig = px.pie(values, values='count', names='profile', title="Profile Distribution")
-                st.plotly_chart(fig)
+                column.plotly_chart(fig)
 
             else: 
 
@@ -65,7 +66,7 @@ df_final['date_only'] = pd.to_datetime(df_final['order_date']).dt.date
 # FONCTION KPI 
 
 # Fonction pour créer le graphique en fonction du filtre
-def plot_top_objects_label(filter_value):
+def plot_top_objects_label(filter_value,column):
     # Filtrer les données en fonction de la valeur de filtrage
     filtered_data = df_final[df_final['order_label'] == filter_value]
 
@@ -76,10 +77,10 @@ def plot_top_objects_label(filter_value):
     fig = px.bar(top_objects, x=top_objects.index, y=top_objects.values, color=top_objects.values,
                  labels={'x': 'Objets', 'y': "Nombre d'occurrences"})
     fig.update_xaxes(tickangle=45)
-    st.plotly_chart(fig)
+    column.plotly_chart(fig)
 
 # Fonction pour créer le graphique en fonction du filtre
-def plot_top_objects_palier(filter_value):
+def plot_top_objects_palier(filter_value,column):
     # Filtrer les données en fonction de la valeur de filtrage
     filtered_data = df_final[df_final['palier'] == filter_value]
 
@@ -90,9 +91,9 @@ def plot_top_objects_palier(filter_value):
     fig = px.bar(top_objects, x=top_objects.index, y=top_objects.values, color=top_objects.values,
                  labels={'x': 'Objets', 'y': "Nombre d'occurrences"})
     fig.update_xaxes(tickangle=45)
-    st.plotly_chart(fig)
+    column.plotly_chart(fig)
 
-def plot_top_objects_synthese(filter_city=None, filter_region=None):
+def plot_top_objects_synthese(column,filter_city=None, filter_region=None):
     # Filtrer les données si des filtres sont spécifiés
     if filter_city and filter_region:
         filtered_data = df_final_synthese[(df_final_synthese['customer_city'] == filter_city) & (df_final_synthese['customer_state'] == filter_region)]
@@ -106,9 +107,9 @@ def plot_top_objects_synthese(filter_city=None, filter_region=None):
     fig = px.bar(top_objects, x=top_objects.index, y=top_objects.values, color=top_objects.values,
                  labels={'x': 'Objets', 'y': "Nombre d'occurrences"})
     fig.update_xaxes(tickangle=45)
-    st.plotly_chart(fig)
+    column.plotly_chart(fig)
 
-def plot_saisonalite(filter_city=None, filter_region=None):
+def plot_saisonalite(column,filter_city=None, filter_region=None):
     # Filtrer les données si des filtres sont spécifiés
     if filter_city and filter_region:
         filtered_data = df_final_synthese[(df_final_synthese['customer_city'] == filter_city) & (df_final_synthese['customer_state'] == filter_region)]
@@ -145,9 +146,9 @@ def plot_saisonalite(filter_city=None, filter_region=None):
                       hovermode='x unified')
     
     # Afficher le graphique
-    st.plotly_chart(fig)
+    column.plotly_chart(fig)
 
-def plot_heure(filter_city=None, filter_region=None):
+def plot_heure(column,filter_city=None, filter_region=None):
     if filter_city and filter_region:
         filtered_data = df_final_synthese[(df_final_synthese['customer_city'] == filter_city) & (df_final_synthese['customer_state'] == filter_region)]
     else:
@@ -163,19 +164,19 @@ def plot_heure(filter_city=None, filter_region=None):
     # Obtenir les lignes correspondant aux indices trouvés
     most_common_categories = grouped.loc[max_count_indices]
     fig = px.bar(most_common_categories, x='heure', y='count', color='product_category_name', title="Catégories de produits les plus courantes par heure")
-    st.plotly_chart(fig)
+    column.plotly_chart(fig)
     
 
-def mode_paiement_commande(filtre):
+def mode_paiement_commande(filtre,column):
     order_payment_1 = df_grouped[df_grouped['order_label'] == filtre]['payment_type'].value_counts(normalize=True) * 100
     fig = px.pie(names=order_payment_1.index, values=order_payment_1.values)
-    st.plotly_chart(fig)
+    column.plotly_chart(fig)
 
-def mode_paiement_prix(filtre):
+def mode_paiement_prix(filtre,column):
     #Catégorie 1
     price_payment_1 = df_grouped[df_grouped['palier'] == filtre]['payment_type'].value_counts(normalize=True) * 100
     fig4 = px.pie(names=price_payment_1.index, values=price_payment_1.values)
-    st.plotly_chart(fig4)
+    column.plotly_chart(fig4)
 
 df_final["order_label"] = df_final["order_label"].astype(str)
 
@@ -204,85 +205,86 @@ def top_villes_CA_filtre(filtre):
     return top_10_villes_CA
 
 def nb_cmd_page(filtre):
-        st.subheader("Pourcentage de promoteur/neutre/détracteur")
-        review_plotter.show_repartition(order_label_criteria=filtre)
+        
+        col1,col2=st.columns(2,gap="medium")
 
-        st.subheader("TOP 10 catégories de produits")
-        plot_top_objects_label(filtre)
+        with st.container():
+            
+            col1.subheader("Prix moyen des paniers")
+            avg_basket_order_1 = df_grouped[df_grouped['order_label'] == filtre]['price_y'].mean()
+            med_basket_order_1 = df_grouped[df_grouped['order_label'] == filtre]['price_y'].median()
+            col1.metric(label="valeur moyenne :", value=avg_basket_order_1)
+            col1.metric(label="valeur median :", value=med_basket_order_1)
 
-        st.subheader("Prix moyen des paniers")
-        avg_basket_order_1 = df_grouped[df_grouped['order_label'] == filtre]['price_y'].mean()
-        med_basket_order_1 = df_grouped[df_grouped['order_label'] == filtre]['price_y'].median()
-        st.metric(label="valeur moyenne :", value=avg_basket_order_1)
-        st.metric(label="valeur median :", value=med_basket_order_1)
+            col1.subheader("Pourcentage de promoteur/neutre/détracteur")
+            review_plotter.show_repartition(col1,order_label_criteria=filtre)
 
+            col1.subheader("TOP 10 catégories de produits")
+            plot_top_objects_label(filtre,col1)        
 
-        st.subheader("TOP 10 villes par nombre de clients")
-        st.write(top_villes_par_nombre_clients_filtre(filtre=filtre))
+            col2.subheader("TOP 10 villes par nombre de clients")
+            col2.write(top_villes_par_nombre_clients_filtre(filtre=filtre))
 
-        st.subheader("Mode de paiement les plus utilisés")
-        mode_paiement_commande(filtre=filtre)
+        col2.subheader("Mode de paiement les plus utilisés")
+        mode_paiement_commande(filtre,col2)
 
 def prix_page(filtre):
-        st.subheader("Pourcentage de promoteur/neutre/détracteur")
-        review_plotter.show_repartition(palier_criteria=filtre)
-
-        st.subheader("TOP 10 catégories de produits")
-        plot_top_objects_palier(filtre)
+        
+        col1,col2=st.columns(2)
 
 
-        kpi_1, kpi_2 = st.columns(2)
-        with kpi_1:
-                st.subheader("Prix moyen des paniers")
-                avg_basket_price_1 = df_grouped[df_grouped['palier'] == filtre]['price_y'].mean()
-                med_basket_price_1 = df_grouped[df_grouped['palier'] == filtre]['price_y'].median()
-                st.metric(label="valeur moyenne :", value=avg_basket_price_1)
-                st.metric(label="valeur median :", value=med_basket_price_1)
+        
+        col1.subheader("Prix moyen des paniers")
+        avg_basket_price_1 = df_grouped[df_grouped['palier'] == filtre]['price_y'].mean()
+        med_basket_price_1 = df_grouped[df_grouped['palier'] == filtre]['price_y'].median()
+        col1.metric(label="valeur moyenne :", value=avg_basket_price_1)
+        col1.metric(label="valeur median :", value=med_basket_price_1)
 
-        with kpi_2:
-                st.subheader("Nombre d'articles moyen des paniers")
-                avg_nb_article_moyen_price_1 = round(df_grouped[df_grouped['palier'] == filtre]['nb_article_panier'].mean(),2)
-                st.metric(label='Valeur moyenne :', value = avg_nb_article_moyen_price_1)
+        col2.subheader("Nombre d'articles moyen des paniers")
+        avg_nb_article_moyen_price_1 = round(df_grouped[df_grouped['palier'] == filtre]['nb_article_panier'].mean(),2)
+        col2.metric(label='Valeur moyenne :', value = avg_nb_article_moyen_price_1)
 
-        st.subheader("TOP 10 villes par CA")
-        st.write(top_villes_CA_filtre(filtre=filtre))
+        col2.subheader("Pourcentage de promoteur/neutre/détracteur")
+        review_plotter.show_repartition(col2,palier_criteria=filtre)
 
-        st.subheader("Mode de paiement les plus utilisés")
-        mode_paiement_prix(filtre)
+        col1.subheader("TOP 10 catégories de produits")
+        plot_top_objects_palier(filtre,col1)        
+
+        col2.subheader("TOP 10 villes par CA")
+        col2.write(top_villes_CA_filtre(filtre=filtre))
+
+        col1.subheader("Mode de paiement les plus utilisés")
+        mode_paiement_prix(filtre,col1)
 
 
 
-# SIDEBAR 
-with st.sidebar:
     
-    # st.image('pngegg.png')
-    st.title('🌸 Olist Customer Analysis')
-    st.write("**Les filtres s'aplliquent seulement pour l'onglet synthèse**")
+    ##st.write("**Les filtres s'aplliquent seulement pour l'onglet synthèse**")
     # FILTRE State 
-    unique_state = ['Tous'] + sorted(df_final['customer_state'].unique())
-    selected_state = st.selectbox('**Sélectionnez une région**', unique_state)
+    ##unique_state = ['Tous'] + sorted(df_final['customer_state'].unique())
+    ##selected_state = st.selectbox('**Sélectionnez une région**', unique_state)
     # FILTRE CITY 
-    unique_cities = ['Tous'] + sorted(df_final['customer_city'].unique())
-    selected_city = st.selectbox('**Sélectionnez une ville**', unique_cities)
+    ##unique_cities = ['Tous'] + sorted(df_final['customer_city'].unique())
+    ##selected_city = st.selectbox('**Sélectionnez une ville**', unique_cities)
 
         # Filtrage du DataFrame en fonction des sélections de l'utilisateur
-    if selected_state == 'Tous' and selected_city == 'Tous':
-        df_final_synthese = df_final  # Aucun filtre appliqué
-    elif selected_state == 'Tous':
-        df_final_synthese = df_final[df_final['customer_city'] == selected_city]
-    elif selected_city == 'Tous':
-        df_final_synthese = df_final[df_final['customer_state'] == selected_state]
-    else:
-        df_final_synthese = df_final.query("(customer_state == @selected_state) and (customer_city == @selected_city)")
+    ##if selected_state == 'Tous' and selected_city == 'Tous':
+    ##    df_final_synthese = df_final  # Aucun filtre appliqué
+    ##elif selected_state == 'Tous':
+    ##    df_final_synthese = df_final[df_final['customer_city'] == selected_city]
+    ##elif selected_city == 'Tous':
+    ##    df_final_synthese = df_final[df_final['customer_state'] == selected_state]
+    ##else:
+     ##   df_final_synthese = df_final.query("(customer_state == @selected_state) and (customer_city == @selected_city)")
         
-    if selected_state == 'Tous' and selected_city == 'Tous':
-        df_final_synthese_2 = df_grouped  # Aucun filtre appliqué
-    elif selected_state == 'Tous':
-        df_final_synthese_2 = df_grouped[df_grouped['customer_city'] == selected_city]
-    elif selected_city == 'Tous':
-        df_final_synthese_2 = df_grouped[df_grouped['customer_state'] == selected_state]
-    else:
-        df_final_synthese_2 = df_grouped.query("(customer_state == @selected_state) and (customer_city == @selected_city)")
+    ##if selected_state == 'Tous' and selected_city == 'Tous':
+    ##    df_final_synthese_2 = df_grouped  # Aucun filtre appliqué
+    ##elif selected_state == 'Tous':
+     ##   df_final_synthese_2 = df_grouped[df_grouped['customer_city'] == selected_city]
+    ##elif selected_city == 'Tous':
+    ##    df_final_synthese_2 = df_grouped[df_grouped['customer_state'] == selected_state]
+    ##else:
+    ##    df_final_synthese_2 = df_grouped.query("(customer_state == @selected_state) and (customer_city == @selected_city)")
     
     
 
@@ -328,21 +330,62 @@ with prix:
         prix_page(filtre='Plus de 150')
 
 with synthese:
-    st.subheader('Nombre de client unique :')
-    count_client = df_final_synthese['customer_id'].nunique()
-    st.metric(label='Valeur :', value=count_client)
 
-    st.subheader('CA total :')
-    ca_total = round(df_final_synthese['price_x'].sum(),2)
-    st.metric(label='Valeur :', value=ca_total)
+    col1,col2=st.columns(2)
+
+    # FILTRE State 
+    unique_state = ['Tous'] + sorted(df_final['customer_state'].unique())
+    selected_state = col1.selectbox('**Sélectionnez une région**', unique_state)
+    # FILTRE CITY 
+
+    if(selected_state=="Tous"): 
+        unique_cities = ['Tous'] + sorted(df_final['customer_city'].unique())
+        selected_city = col2.selectbox('**Sélectionnez une ville**', unique_cities)
     
-    st.subheader('Panier moyen')
+    else:
+        unique_cities=['Tous']+sorted(df_final["customer_city"][df_final["customer_state"]==selected_state].unique())
+        selected_city = col2.selectbox('**Sélectionnez une ville**', unique_cities)
+
+        # Filtrage du DataFrame en fonction des sélections de l'utilisateur
+    if selected_state == 'Tous' and selected_city == 'Tous':
+        df_final_synthese = df_final  # Aucun filtre appliqué
+    elif selected_state == 'Tous':
+        df_final_synthese = df_final[df_final['customer_city'] == selected_city]
+    elif selected_city == 'Tous':
+        df_final_synthese = df_final[df_final['customer_state'] == selected_state]
+    else:
+        df_final_synthese = df_final.query("(customer_state == @selected_state) and (customer_city == @selected_city)")
+        
+    if selected_state == 'Tous' and selected_city == 'Tous':
+        df_final_synthese_2 = df_grouped  # Aucun filtre appliqué
+    elif selected_state == 'Tous':
+        df_final_synthese_2 = df_grouped[df_grouped['customer_city'] == selected_city]
+    elif selected_city == 'Tous':
+        df_final_synthese_2 = df_grouped[df_grouped['customer_state'] == selected_state]
+    else:
+        df_final_synthese_2 = df_grouped.query("(customer_state == @selected_state) and (customer_city == @selected_city)")
+
+
+
+
+
+
+
+    col1.subheader('Nombre de client unique :')
+    count_client = df_final_synthese['customer_id'].nunique()
+    col1.metric(label='Valeur :', value=count_client)
+
+    col2.subheader('CA total :')
+    ca_total = round(df_final_synthese['price_x'].sum(),2)
+    col2.metric(label='Valeur :', value=ca_total)
+    
+    col1.subheader('Panier moyen')
     average_price = round(df_final_synthese_2['price_y'].mean(),2)
     median_price = df_final_synthese_2['price_y'].median()
-    st.metric(label="valeur moyenne :", value=average_price)
-    st.metric(label="valeur median :", value=median_price)
+    col1.metric(label="valeur moyenne :", value=average_price)
+    col1.metric(label="valeur median :", value=median_price)
 
-    st.subheader(f'Nombre de commandes dans la ville : {selected_city}')
+    col2.subheader(f'Nombre de commandes dans la ville : {selected_city}')
     if selected_city =='Tous':
         st.write('**Veuillez selectionner une ville**')
     else:
@@ -352,7 +395,7 @@ with synthese:
         df_result = grouped
         df_result = df_result.rename(columns={"order_id":"Total_commandes"})
 
-        def nombre_commande_moyen(filter_city=None):
+        def nombre_commande_moyen(column,filter_city=None):
 
             if filter_city:
                 df_filtered_3 = df_result[(df_result['customer_city'] == filter_city)]
@@ -360,26 +403,31 @@ with synthese:
                 df_filtered_3 = df_result
 
             Nombre_commande_moyen = round(df_filtered_3['Total_commandes'].mean(),2)
-            st.metric(label='valeur',value=Nombre_commande_moyen)
+            column.metric(label='valeur',value=Nombre_commande_moyen)
 
-        nombre_commande_moyen()
+        nombre_commande_moyen(col2)
 
-    st.subheader("Nombre d'articles moyen des paniers")
+    col1.subheader("Nombre d'articles moyen des paniers")
     avg_nb_article_moyen_price = round(df_final_synthese_2['nb_article_panier'].mean(),2)
-    st.metric(label='Valeur moyenne :', value = avg_nb_article_moyen_price)
+    col1.metric(label='Valeur moyenne :', value = avg_nb_article_moyen_price)
+
+    frais_livraison = round(df_final_synthese_2['freight_value'].mean(),2)
+    col2.metric(label='Frais de livraison moyen :',value=frais_livraison)
+
 
     # st.subheader('Pourcentage de promoteur/neutre/détracteur')
 
-    st.subheader('Moyen de paiement')
+    col2.subheader('Moyen de paiement')
     price_payment = df_final_synthese_2['payment_type'].value_counts(normalize=True) * 100
     fig8 = px.pie(names=price_payment.index, values=price_payment.values)
-    st.plotly_chart(fig8)
+    col2.plotly_chart(fig8)
 
     st.subheader('Saisonnalité')
-    plot_saisonalite()
+    plot_saisonalite(st)
 
     st.subheader('Catégories de produit par heure')
-    plot_heure()
+    plot_heure(st)
     
+
     st.subheader('TOP 10 catégories de produits')
-    plot_top_objects_synthese()
+    plot_top_objects_synthese(st)
