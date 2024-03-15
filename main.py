@@ -21,13 +21,13 @@ class ReviewPlotter:
 
             def reviewer_profile(x):
                 if pd.isnull(x):
-                    return "Unknown"
+                    return "Non renseigné"
                 elif x>=pos_threshold:
-                    return "Promoter"
+                    return "Promoteur"
                 elif x<neg_threshold:
-                    return "Detractor"
+                    return "Détracteur"
                 else:
-                    return "Neutral"
+                    return "Neutre"
 
             self.data["profile"]=self.data["average_review_score"].apply(lambda x: reviewer_profile(x))
             filtered_df=self.data.copy()
@@ -54,8 +54,8 @@ class ReviewPlotter:
 review_plotter = ReviewPlotter()
 
 # df_order_payments = pd.read_csv("Data\olist_order_payments_dataset.csv")
-df_final = pd.read_csv("C:/Users/anton/Desktop/Data/Master2/data_app_automatisation/data_final.csv")
-df_grouped = pd.read_csv("C:/Users/anton/Desktop/Data/Master2/data_app_automatisation/df_group.csv")
+df_final = pd.read_csv("C:/Users/anton/Desktop/Data/Master2/data_app_automatisation/Elendil/data_final.csv")
+df_grouped = pd.read_csv("C:/Users/anton/Desktop/Data/Master2/data_app_automatisation/Elendil/df_group.csv")
 
 
 df_grouped['customer_city'] = df_final['customer_city']
@@ -164,12 +164,6 @@ def plot_heure(filter_city=None, filter_region=None):
     most_common_categories = grouped.loc[max_count_indices]
     fig = px.bar(most_common_categories, x='heure', y='count', color='product_category_name', title="Catégories de produits les plus courantes par heure")
     st.plotly_chart(fig)
-    # st.write(most_common_categories)
-
-    # total = filtered_data.groupby('heure')['product_category_name'].nunique().reset_index(name='total_type_produit')
-    # fig = px.bar(filtered_data, x=filtered_data['heure'], y=total)
-    # fig.update_xaxes(tickangle=45)
-    # st.plotly_chart(fig)
     
 
 def mode_paiement_commande(filtre):
@@ -293,7 +287,7 @@ with st.sidebar:
     
 
 #  PAGE PRINCIPAL 
-nb_cmd, prix, synthese = st.tabs(['Nombre de commandes','Prix dépensé','Synthèse']) 
+nb_cmd, prix, synthese = st.tabs(['Nombre de commandes','Prix du panier','Synthèse']) 
 
 with nb_cmd:
     with st.expander("Segmentation des clients en 3 catégories :"):
@@ -334,8 +328,16 @@ with prix:
         prix_page(filtre='Plus de 150')
 
 with synthese:
+    st.subheader('Nombre de client unique :')
+    count_client = df_final_synthese['customer_id'].nunique()
+    st.metric(label='Valeur :', value=count_client)
+
+    st.subheader('CA total :')
+    ca_total = round(df_final_synthese['price_x'].sum(),2)
+    st.metric(label='Valeur :', value=ca_total)
+    
     st.subheader('Panier moyen')
-    average_price = df_final_synthese_2['price_y'].mean()
+    average_price = round(df_final_synthese_2['price_y'].mean(),2)
     median_price = df_final_synthese_2['price_y'].median()
     st.metric(label="valeur moyenne :", value=average_price)
     st.metric(label="valeur median :", value=median_price)
@@ -378,8 +380,6 @@ with synthese:
 
     st.subheader('Catégories de produit par heure')
     plot_heure()
-    # st.write(df_final.columns)
-
-
+    
     st.subheader('TOP 10 catégories de produits')
     plot_top_objects_synthese()
