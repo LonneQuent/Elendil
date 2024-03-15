@@ -5,6 +5,7 @@ import plotly.express as px
 import os
 
 st.set_page_config(layout="wide")
+st.title("Analyse client Olist")
 
 class ReviewPlotter:
 
